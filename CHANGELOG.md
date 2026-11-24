@@ -1,6 +1,6 @@
 # 变更记录
 
-## [未发布]
+## [0.2.2] - 2026-11-24
 
 ### 修复
 
@@ -8,6 +8,10 @@
 - 准入桥的原函数同时记在包装函数自身（`Symbol.for('@szleaves/dsh-image-to-text.admission-bridge.original')`）；卸载时若方法已被别的插件包住，保留服务上的槽位，避免 `originalResolveModelInfo` 回退到被包装的方法而读到伪造的 `image` 模态。
 - 装配里 `assembly.tools` 不是数组时不再静默跳过，改为写一条 warn（内核会把该值原样交给请求构造）。
 - `ask_image` 的 guard 拒绝文案带上当步路由（`provider/model`），从报错就能看出判定的是哪个模型。
+
+### 变更
+
+- 版本号从 0.2.1 提到 0.2.2。
 
 ## [0.2.1] - 2026-11-24
 

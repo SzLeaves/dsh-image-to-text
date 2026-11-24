@@ -1,6 +1,6 @@
 {
   "name": "@szleaves/dsh-image-to-text",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "private": true,
   "description": "Let a text-only conversation model read images by asking an image-capable model that is already registered in the same DSH.",
   "keywords": [

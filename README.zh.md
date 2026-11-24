@@ -1,4 +1,4 @@
-# dsh-image-to-text
+# @szleaves/dsh-image-to-text
 
 <div align="center">
 
@@ -6,9 +6,9 @@
 纯文本对话模型调用一个 <code>ask_image</code> 工具；同一个 DSH 里已经注册、声明支持图片输入的读图模型来回答，文字作为工具结果返回。</p>
 
 <p>
-<a href="https://www.npmjs.com/package/dsh-image-to-text"><img src="https://img.shields.io/npm/v/dsh-image-to-text?style=flat-square&labelColor=1F2328&color=2DA44E&logo=npm&logoColor=white" alt="npm 版本"></a>
-<a href="https://www.npmjs.com/package/dsh-image-to-text"><img src="https://img.shields.io/npm/dm/dsh-image-to-text?style=flat-square&labelColor=1F2328&logo=npm&logoColor=white" alt="npm 下载量"></a>
-<a href="./LICENSE"><img src="https://img.shields.io/npm/l/dsh-image-to-text?style=flat-square&labelColor=1F2328&color=blue" alt="MIT 许可"></a>
+<a href="https://www.npmjs.com/package/@szleaves/dsh-image-to-text"><img src="https://img.shields.io/npm/v/@szleaves/dsh-image-to-text?style=flat-square&labelColor=1F2328&color=2DA44E&logo=npm&logoColor=white" alt="npm 版本"></a>
+<a href="https://www.npmjs.com/package/@szleaves/dsh-image-to-text"><img src="https://img.shields.io/npm/dm/@szleaves/dsh-image-to-text?style=flat-square&labelColor=1F2328&logo=npm&logoColor=white" alt="npm 下载量"></a>
+<a href="./LICENSE"><img src="https://img.shields.io/npm/l/@szleaves/dsh-image-to-text?style=flat-square&labelColor=1F2328&color=blue" alt="MIT 许可"></a>
 <img src="https://img.shields.io/badge/dsh-%3E%3D0.2.1--rc.5%20%3C0.3.0-38BDF8?style=flat-square&labelColor=1F2328" alt="dsh >=0.2.1-rc.5 <0.3.0">
 </p>
 
@@ -42,7 +42,7 @@ DeepSeek Harness 允许在同一个会话里混用模型。只接受文字的模
 在 DSH 里打开 **插件 → 添加插件**，指向本 bundle。两种 `install_bundle` 目标都可以：
 
 - **目录**：`target` 指向本仓库的绝对路径。pnpm 会记为 `link:`，profile 的 `node_modules` 下是指向工作树的软链，适合开发期。注意下面的软链说明。
-- **tarball**：在仓库里 `npm pack --pack-destination ./dist`，再把 `target` 指向生成的 `dsh-image-to-text-<版本>.tgz`。pnpm 会安装实体副本，之后移动或删除源码目录都不影响运行。长期使用推荐这种方式。
+- **tarball**：在仓库里 `npm pack --pack-destination ./dist`，再把 `target` 指向生成的 `szleaves-dsh-image-to-text-<版本>.tgz`。pnpm 会安装实体副本，之后移动或删除源码目录都不影响运行。长期使用推荐这种方式。
 
 `link:` 安装时，Node 解析 `@deepseek-ai/schemastery`（本插件唯一依赖）会从包所在目录逐级往上找 `node_modules`，而 `~/.dsh/self-plugins/…` 这条路径上面没有它。要在包内建一个软链指向 profile 里已有的副本，否则插件加载失败：
 
@@ -58,7 +58,7 @@ tarball 安装没有这个问题：实体副本落在 profile 的 `node_modules`
 
 ## 配置
 
-打开 **Plugins**，找到 `dsh-image-to-text` 一行，点 **Configure**。模型下拉来自插件自己注册的只读接口 `/plugins/image-to-text/models`，只列出声明图片输入的模型。
+打开 **Plugins**，找到 `@szleaves/dsh-image-to-text` 一行，点 **Configure**。模型下拉来自插件自己注册的只读接口 `/plugins/image-to-text/models`，只列出声明图片输入的模型。
 
 | 字段 | 默认值 | 作用 |
 |---|---|---|
@@ -185,8 +185,6 @@ mkdir -p node_modules/@deepseek-ai
 ln -s <dsh 安装目录>/node_modules/@deepseek-ai/schemastery node_modules/@deepseek-ai/schemastery
 ln -s <dsh 安装目录>/node_modules/@deepseek-ai/cosmokit   node_modules/@deepseek-ai/cosmokit
 ```
-
-改完代码要同步到本地安装副本时，用 `npm run sync:profile`（默认目标 `~/.dsh/self-plugins/dsh-image-to-text`，可用 `DSH_IMAGE_TO_TEXT_TARGET` 覆盖）。脚本只负责拷文件与自查，不负责重启。
 
 ## 卸载
 

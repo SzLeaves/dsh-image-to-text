@@ -1,4 +1,4 @@
-# dsh-image-to-text
+# @szleaves/dsh-image-to-text
 
 <div align="center">
 
@@ -8,9 +8,9 @@ is already registered in the same DSH — one that declares image input — answ
 text comes back as the tool result.</p>
 
 <p>
-<a href="https://www.npmjs.com/package/dsh-image-to-text"><img src="https://img.shields.io/npm/v/dsh-image-to-text?style=flat-square&labelColor=1F2328&color=2DA44E&logo=npm&logoColor=white" alt="npm version"></a>
-<a href="https://www.npmjs.com/package/dsh-image-to-text"><img src="https://img.shields.io/npm/dm/dsh-image-to-text?style=flat-square&labelColor=1F2328&logo=npm&logoColor=white" alt="npm downloads"></a>
-<a href="./LICENSE"><img src="https://img.shields.io/npm/l/dsh-image-to-text?style=flat-square&labelColor=1F2328&color=blue" alt="MIT license"></a>
+<a href="https://www.npmjs.com/package/@szleaves/dsh-image-to-text"><img src="https://img.shields.io/npm/v/@szleaves/dsh-image-to-text?style=flat-square&labelColor=1F2328&color=2DA44E&logo=npm&logoColor=white" alt="npm version"></a>
+<a href="https://www.npmjs.com/package/@szleaves/dsh-image-to-text"><img src="https://img.shields.io/npm/dm/@szleaves/dsh-image-to-text?style=flat-square&labelColor=1F2328&logo=npm&logoColor=white" alt="npm downloads"></a>
+<a href="./LICENSE"><img src="https://img.shields.io/npm/l/@szleaves/dsh-image-to-text?style=flat-square&labelColor=1F2328&color=blue" alt="MIT license"></a>
 <img src="https://img.shields.io/badge/dsh-%3E%3D0.2.1--rc.5%20%3C0.3.0-38BDF8?style=flat-square&labelColor=1F2328" alt="dsh >=0.2.1-rc.5 <0.3.0">
 </p>
 
@@ -60,7 +60,7 @@ Open **Plugins → Add plugin** in DSH and point it at this bundle. Two targets 
   `link:`, so the copy under the profile's `node_modules` is a symlink to your working
   tree — handy while developing. See the symlink note below.
 - **Tarball**: `npm pack --pack-destination ./dist` in the repo, then point `target` at
-  the generated `dsh-image-to-text-<version>.tgz`. pnpm installs a real copy; moving or
+  the generated `szleaves-dsh-image-to-text-<version>.tgz`. pnpm installs a real copy; moving or
   deleting the source tree later does not affect it. This is the recommended way for
   long-term use.
 
@@ -83,7 +83,7 @@ text-only.
 
 ## Configuration
 
-Open **Plugins**, find the `dsh-image-to-text` row, and click **Configure**. The model
+Open **Plugins**, find the `@szleaves/dsh-image-to-text` row, and click **Configure**. The model
 dropdown comes from the plugin's own read-only endpoint `/plugins/image-to-text/models`
 and lists only models that declare image input.
 
@@ -267,10 +267,6 @@ mkdir -p node_modules/@deepseek-ai
 ln -s <dsh-install>/node_modules/@deepseek-ai/schemastery node_modules/@deepseek-ai/schemastery
 ln -s <dsh-install>/node_modules/@deepseek-ai/cosmokit   node_modules/@deepseek-ai/cosmokit
 ```
-
-To sync edited code to a local install copy, `npm run sync:profile` (default target
-`~/.dsh/self-plugins/dsh-image-to-text`, override with `DSH_IMAGE_TO_TEXT_TARGET`). The
-script only copies files and self-checks; it does not restart the process.
 
 ## Uninstall
 

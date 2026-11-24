@@ -7,7 +7,7 @@
  * schema; this page only stages edits and sends them back in one mutation.
  */
 window.__ModuleLoader__.load({
-  id: 'dsh-image-to-text',
+  id: '@szleaves/dsh-image-to-text',
   factory(require) {
     const React = require('react')
     const h = React.createElement
@@ -15,7 +15,7 @@ window.__ModuleLoader__.load({
     /** Settings namespace: the Host plugin's entry id, which is also this row's id. */
     const NS = 'image-to-text'
     /** Key format for keyed page slots: `<package name>#<row id>`. */
-    const ROW_KEY = 'dsh-image-to-text#image-to-text'
+    const ROW_KEY = '@szleaves/dsh-image-to-text#image-to-text'
     /** Read-only model list registered by this plugin's Host half. */
     const MODELS_ROUTE = '/plugins/image-to-text/models'
 

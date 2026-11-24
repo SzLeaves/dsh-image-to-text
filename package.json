@@ -1,5 +1,5 @@
 {
-  "name": "dsh-image-to-text",
+  "name": "@szleaves/dsh-image-to-text",
   "version": "0.2.0",
   "private": true,
   "description": "Let a text-only conversation model read images by asking an image-capable model that is already registered in the same DSH.",
@@ -16,13 +16,13 @@
   ],
   "license": "MIT",
   "author": "Szleaves <steven-zh@foxmail.com>",
-  "homepage": "https://github.com/Lovenndme/dsh-image-to-text#readme",
+  "homepage": "https://github.com/SzLeaves/dsh-image-to-text#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Lovenndme/dsh-image-to-text.git"
+    "url": "git+https://github.com/SzLeaves/dsh-image-to-text.git"
   },
   "bugs": {
-    "url": "https://github.com/Lovenndme/dsh-image-to-text/issues"
+    "url": "https://github.com/SzLeaves/dsh-image-to-text/issues"
   },
   "type": "module",
   "engines": {
@@ -67,8 +67,7 @@
   "scripts": {
     "test": "node --test test/",
     "check": "node --check index.js && node --check client.js && for f in lib/*.js; do node --check \"$f\"; done",
-    "pack:tgz": "npm pack --pack-destination ./dist --cache ./.npm-cache --no-audit --no-fund",
-    "sync:profile": "scripts/sync-to-profile.sh"
+    "pack:tgz": "npm pack --pack-destination ./dist --cache ./.npm-cache --no-audit --no-fund"
   },
   "dependencies": {
     "@deepseek-ai/schemastery": "^3.18.1"

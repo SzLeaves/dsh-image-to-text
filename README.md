@@ -81,24 +81,6 @@ A tarball install has no such problem: the real copy lives under the profile's
 After installing or reloading, `ask_image` appears in sessions whose current model is
 text-only.
 
-### When code changes take effect
-
-- **Changed install location** (tarball ↔ directory, or a new path): the module URL
-  changes. Toggle the plugin row in **Plugins** off and on and the new code loads; no
-  restart needed.
-- **Edited the code in place** (same path): Node caches modules by URL, so toggling
-  only re-runs `apply()` on the old module. Restart the process hosting `dsh web`.
-- **Reload fails** (e.g. the `link:` dependency did not resolve): the plugin keeps the
-  last successfully loaded module and the row still shows enabled. Check whether the
-  package can be imported on its own:
-
-```bash
-cd <package-dir> && node -e "import('./index.js').then(m => console.log(Object.keys(m)))"
-```
-
-Changing **configuration** (including saving from the settings page) needs no restart:
-`.volatile()` fields are references and `getConfig()` reads the latest value every time.
-
 ## Configuration
 
 Open **Plugins**, find the `dsh-image-to-text` row, and click **Configure**. The model

@@ -56,18 +56,6 @@ tarball 安装没有这个问题：实体副本落在 profile 的 `node_modules`
 
 装好或重新加载后，`ask_image` 会出现在当前模型是纯文本的会话里。
 
-### 代码改动怎么生效
-
-- **换了安装位置**（tarball ↔ 目录，或换路径）：模块 URL 变了，在 **Plugins** 页把这一行关掉再打开就加载新代码，不用重启。
-- **原地改代码**（同一路径）：Node 按 URL 缓存模块，切行只会用旧模块重跑 `apply()`。必须重启承载 `dsh web` 的进程。
-- **重新加载失败**（例如 `link:` 依赖没解析到）：插件继续跑上一次成功加载的模块，行的状态仍显示 enabled。先确认包能否独立导入：
-
-```bash
-cd <包目录> && node -e "import('./index.js').then(m => console.log(Object.keys(m)))"
-```
-
-改**配置**（含设置页保存）不用重启：`.volatile()` 字段是引用，`getConfig()` 每次读最新值。
-
 ## 配置
 
 打开 **Plugins**，找到 `dsh-image-to-text` 一行，点 **Configure**。模型下拉来自插件自己注册的只读接口 `/plugins/image-to-text/models`，只列出声明图片输入的模型。

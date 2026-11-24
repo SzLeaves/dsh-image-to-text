@@ -1,0 +1,76 @@
+{
+  "name": "dsh-image-to-text",
+  "version": "0.2.0",
+  "private": true,
+  "description": "Let a text-only conversation model read images by asking an image-capable model that is already registered in the same DSH.",
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "deepseek-harness",
+    "cordis",
+    "plugin",
+    "multimodal",
+    "image",
+    "text-only",
+    "vision"
+  ],
+  "license": "MIT",
+  "author": "Szleaves <steven-zh@foxmail.com>",
+  "homepage": "https://github.com/Lovenndme/dsh-image-to-text#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Lovenndme/dsh-image-to-text.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Lovenndme/dsh-image-to-text/issues"
+  },
+  "type": "module",
+  "engines": {
+    "node": ">=20",
+    "dsh": ">=0.2.1-rc.5 <0.3.0-0"
+  },
+  "exports": {
+    ".": "./index.js",
+    "./client": "./client.js",
+    "./cordis.patch.yml": "./cordis.patch.yml",
+    "./package.json": "./package.json",
+    "./locale/*.json": "./locale/*.json",
+    "./icon": "./icon.svg"
+  },
+  "files": [
+    "index.js",
+    "client.js",
+    "lib",
+    "locale",
+    "cordis.patch.yml",
+    "icon.svg",
+    "README.md",
+    "README.zh.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "immediately": true
+    },
+    "compatibility": {
+      "dshReleases": {
+        "0.2.1-rc.5": "verified"
+      },
+      "note": "Verified on 0.2.1-rc.5 only. Host half uses llm.resolveModelInfo / prepareCall, tools.register / guard, systemPrompt.section, and optionally settings.configure plus webServer.register; the client half is a plugins.row.config page. Newer 0.2.x releases are untested."
+    }
+  },
+  "scripts": {
+    "test": "node --test test/",
+    "check": "node --check index.js && node --check client.js && for f in lib/*.js; do node --check \"$f\"; done",
+    "pack:tgz": "npm pack --pack-destination ./dist --cache ./.npm-cache --no-audit --no-fund",
+    "sync:profile": "scripts/sync-to-profile.sh"
+  },
+  "dependencies": {
+    "@deepseek-ai/schemastery": "^3.18.1"
+  }
+}

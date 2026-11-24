@@ -12,7 +12,7 @@ beforeEach(() => {
 // state is only dropped when the final instance goes away.
 const liveDisposers = []
 
-function setup({ resolve, text = 'SECTION BODY' } = {}) {
+function setup({ resolve, prepare, text = 'SECTION BODY' } = {}) {
   const services = {}
   const state = {
     sections: [],
@@ -20,6 +20,7 @@ function setup({ resolve, text = 'SECTION BODY' } = {}) {
     guards: [],
     warnings: [],
     resolveCalls: [],
+    prepareCalls: [],
     disposers: [],
   }
 
@@ -54,6 +55,14 @@ function setup({ resolve, text = 'SECTION BODY' } = {}) {
         const modalities = { 'text-model': ['text'], 'vision-model': ['text', 'image'] }[model]
         return { provider, id: model, inputModalities: modalities }
       },
+      // Only present when a test opts in: without it the code must fall back to
+      // the unpatched resolver, which is what the rest of these tests exercise.
+      ...(prepare === undefined ? {} : {
+        async prepareCall(config) {
+          state.prepareCalls.push(config)
+          return { inputModalities: prepare(config.provider, config.model) }
+        },
+      }),
     },
     logger: () => ({
       info() {},
@@ -288,6 +297,35 @@ test('the same route is resolved once and reused', async () => {
   assert.deepEqual(state.resolveCalls, [['provider', 'text-model']])
 })
 
+test('the decision reads prepareCall when the host exposes it', async () => {
+  const { state } = setup({
+    prepare: () => ['text'],
+    resolve: async () => {
+      throw new Error('resolveModelInfo must not be consulted while prepareCall exists')
+    },
+  })
+  const agent = headerAgent('text-model')
+
+  const result = await assemble({ state }, makeAssembly(), { agent })
+
+  assert.deepEqual(state.prepareCalls, [{ provider: 'provider', model: 'text-model' }])
+  assert.deepEqual(state.resolveCalls, [], 'the bridged resolver is never the source')
+  assert.deepEqual(result.tools.map(tool => tool.name), ['ask_image', 'bash'])
+  assert.equal(result.sections[0].text, 'SECTION BODY')
+})
+
+test('a non-array tool table is left untouched but reported', async () => {
+  const { state } = setup()
+  const agent = headerAgent('text-model')
+  const tools = new Map([['ask_image', {}]])
+  const assembly = { ...makeAssembly(), tools }
+
+  const result = await assemble({ state }, assembly, { agent })
+
+  assert.equal(result.tools, tools)
+  assert.ok(state.warnings.some(message => /not an array/.test(message)))
+})
+
 test('llm/adapters-updated clears the route cache', async () => {
   const { state } = setup()
   const agent = headerAgent('text-model')
@@ -314,6 +352,7 @@ test('the guard allows ask_image for a text-only agent and rejects it for an ima
   const reason = guard({ name: 'ask_image', agent: visionAgent })
   assert.equal(typeof reason, 'string')
   assert.match(reason, /only applies to models that cannot see images/)
+  assert.match(reason, /provider\/vision-model/, 'the rejection names the route it was decided for')
 
   assert.equal(guard({ name: 'bash', agent: visionAgent }), undefined)
   assert.equal(guard({ name: 'ask_image' }), undefined)

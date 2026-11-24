@@ -120,6 +120,38 @@ test('uninstall leaves a third-party wrapper installed after us in place', async
   assert.equal(llm.resolveModelInfo, thirdParty)
 })
 
+test('an uninstall under a later wrapper keeps the unpatched resolver reachable', async () => {
+  const { ctx, llm } = setup()
+  const original = llm.resolveModelInfo
+  const dispose = installAdmissionBridge(ctx)
+  const thirdParty = async () => ({ provider: 'p', id: 'third', inputModalities: ['text'] })
+  llm.resolveModelInfo = thirdParty
+
+  dispose()
+  assert.equal(llm.resolveModelInfo, thirdParty)
+  // The bridge is still in the chain, so the slot has to survive: dropping it
+  // here is what made the capability lookup read the fabricated answer.
+  assert.deepEqual((await originalResolveModelInfo(ctx)('p', 'text-model')).inputModalities, ['text'])
+})
+
+test('a bridge left installed without its slot is adopted, not stacked', async () => {
+  const { ctx, llm } = setup()
+  const original = llm.resolveModelInfo
+  installAdmissionBridge(ctx)
+  const bridged = llm.resolveModelInfo
+  delete llm[Symbol.for('@szleaves/dsh-image-to-text.admission-bridge')]
+
+  // The marker on the function alone recovers the unpatched resolver.
+  assert.deepEqual((await originalResolveModelInfo(ctx)('p', 'text-model')).inputModalities, ['text'])
+
+  const dispose = installAdmissionBridge(ctx)
+  assert.equal(llm.resolveModelInfo, bridged, 'the existing wrapper is adopted, not wrapped again')
+  assert.deepEqual((await llm.resolveModelInfo('p', 'text-model')).inputModalities, ['text', 'image'])
+
+  dispose()
+  assert.equal(llm.resolveModelInfo, original)
+})
+
 test('after a real uninstall the bridge can be installed again', async () => {
   const { ctx, llm } = setup()
   const dispose = installAdmissionBridge(ctx)

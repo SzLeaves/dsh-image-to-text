@@ -1,5 +1,14 @@
 # 变更记录
 
+## [未发布]
+
+### 修复
+
+- 纯文本模型被误判成"能看图"、`ask_image` 调用被拒（`ask_image only applies to models that cannot see images`）：装配期的能力判定改用 `llm.prepareCall(...).inputModalities`，与请求构造时投影图片所用的数据源一致，也不再经过准入桥。
+- 准入桥的原函数同时记在包装函数自身（`Symbol.for('@szleaves/dsh-image-to-text.admission-bridge.original')`）；卸载时若方法已被别的插件包住，保留服务上的槽位，避免 `originalResolveModelInfo` 回退到被包装的方法而读到伪造的 `image` 模态。
+- 装配里 `assembly.tools` 不是数组时不再静默跳过，改为写一条 warn（内核会把该值原样交给请求构造）。
+- `ask_image` 的 guard 拒绝文案带上当步路由（`provider/model`），从报错就能看出判定的是哪个模型。
+
 ## [0.2.1] - 2026-11-24
 
 ### 修复

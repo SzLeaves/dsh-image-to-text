@@ -20,7 +20,7 @@ function response() {
   }
 }
 
-function host({ resolve, providers, catalogs } = {}) {
+function host({ resolve, providers, catalogs, connection } = {}) {
   const recorded = {
     effects: [],
     scopeEffects: [],
@@ -36,6 +36,8 @@ function host({ resolve, providers, catalogs } = {}) {
   }
 
   const original = resolve ?? (async (provider, model) => ({ provider, id: model, inputModalities: ['text'] }))
+  const connectionService = connection === null ? undefined : connection ?? { requestRejection: () => undefined }
+  const services = { connection: connectionService }
   const modelCatalog = catalogs ?? {
     a: [
       { id: 'image-model', name: 'Image Model', inputModalities: ['text', 'image'] },
@@ -45,6 +47,9 @@ function host({ resolve, providers, catalogs } = {}) {
 
   const ctx = {
     fiber: { id: 'plugin-fiber' },
+    get(name) {
+      return services[name]
+    },
     logger(moduleName) {
       recorded.loggerNames.push(moduleName)
       return {
@@ -71,6 +76,9 @@ function host({ resolve, providers, catalogs } = {}) {
       callback({
         fiber: { id: 'child-fiber' },
         llm: ctx.llm,
+        get(name) {
+          return services[name]
+        },
         logger(moduleName) {
           recorded.loggerNames.push(moduleName)
           return {
@@ -270,12 +278,41 @@ test('a total catalog failure is reported as 500', async () => {
   assert.ok(recorded.logs.some(([level, message]) => level === 'warn' && /registry down/.test(message)))
 })
 
-test('the tool timeout follows timeoutSeconds and is fixed at registration', () => {
+test('an untrusted request is refused before the catalog is read', async () => {
+  let listCalls = 0
+  const { ctx, recorded } = host({ connection: { requestRejection: () => 403 } })
+  ctx.llm.listProviders = () => {
+    listCalls += 1
+    return []
+  }
+  apply(ctx, {})
+
+  for (const route of recorded.routes) {
+    const res = response()
+    await route.handler({ method: 'GET', headers: {} }, res)
+    assert.equal(res.state.status, 403)
+    assert.deepEqual(JSON.parse(res.state.body), { error: 'untrusted request' })
+  }
+  assert.equal(listCalls, 0)
+})
+
+test('a route without the connection service refuses instead of serving', async () => {
+  const { ctx, recorded } = host({ connection: null })
+  apply(ctx, {})
+
+  const res = response()
+  await recorded.routes[0].handler({ method: 'GET', headers: {} }, res)
+
+  assert.equal(res.state.status, 503)
+  assert.deepEqual(JSON.parse(res.state.body), { error: 'connection service unavailable' })
+})
+
+test('the tool deadline is a fixed kernel bound, not the live reader timeout', () => {
   const byDefault = host()
   apply(byDefault.ctx, {})
-  assert.equal(byDefault.recorded.tools[0].timeoutMs, 180 * 1000 + 15000)
+  assert.equal(byDefault.recorded.tools[0].timeoutMs, (3600 + 15) * 1000)
 
   const short = host()
   apply(short.ctx, { timeoutSeconds: 30 })
-  assert.equal(short.recorded.tools[0].timeoutMs, 30 * 1000 + 15000)
+  assert.equal(short.recorded.tools[0].timeoutMs, (3600 + 15) * 1000)
 })

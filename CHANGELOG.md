@@ -1,5 +1,24 @@
 # 变更记录
 
+## [0.2.1] - 2026-11-24
+
+### 修复
+
+- 配置页的两条只读路由先经宿主 `connection.requestRejection` 判权：未受信请求返回 401/403，`connection` 服务缺失时返回 503，不再无鉴权返回模型清单与决策记录。
+- 工具的内核截止时间改为固定上界 `3615s`，`timeoutSeconds` 每次读图时读取；改超时不再需要重载插件。
+- 配置页保存提示改为"已保存"；`bridgeAdmission` 旁注明保存后需重新加载插件才生效（该项仍在 `apply` 时读取）。
+- 插件卸载时清空模块级的路由缓存与决策记录，重载后不再带出旧实例的数据。
+
+### 变更
+
+- `package.json` 加回 `private: true` 并保留 `publishConfig.access: "public"`（防误发）；发行方式以 GitHub 仓库和本地 tarball 为准，不依赖 npm 发布。
+- 两份 README 去掉 npm 徽章，安装说明改为从 GitHub 仓库克隆，或指向本地打出的 tarball。
+- 去掉 `dsh.client.immediately`：普通客户端插件不需要占用启动第一阶段。
+- 声明 `dsh.manifestVersion: 1`；移除非标准的 `dsh.compatibility` 字段（验证范围改记在 README）。
+- `engines.node` 由 `>=20` 提到 `>=22`（代码使用 `AbortSignal.any`，且与 DSH 实际运行环境一致）。
+- `locale/*.json` 只保留宿主读取的 `meta`（标题与描述）；设置页文案以 `client.js` 的内联词典为唯一来源，不再两处维护。
+- 版本号从 0.2.0 提到 0.2.1。
+
 ## [0.2.0] - 2026-11-24
 
 ### 新增

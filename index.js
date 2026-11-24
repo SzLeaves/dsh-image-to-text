@@ -62,6 +62,27 @@ export function apply(ctx, config) {
 }
 
 /**
+ * The web server has no server-wide authentication: each route owner enforces
+ * its own request policy. Delegate to Connection's Host/Origin and
+ * browser-credential check, as first-party routes do. Without that service the
+ * page is not reachable over HTTP anyway, so refuse rather than serve
+ * unauthenticated reads.
+ */
+function rejected(ctx, request, response) {
+  const connection = ctx.get('connection')
+  if (connection === undefined) {
+    response.writeHead(503, { 'content-type': 'application/json' })
+    response.end(JSON.stringify({ error: 'connection service unavailable' }))
+    return true
+  }
+  const rejection = connection.requestRejection(request)
+  if (rejection === undefined) return false
+  response.writeHead(rejection, { 'content-type': 'application/json' })
+  response.end(JSON.stringify({ error: 'untrusted request' }))
+  return true
+}
+
+/**
  * Read-only model list for the Configure page. Shaped for a `<select>`: providers
  * in registry order, each with the models that declared image input.
  *
@@ -70,6 +91,7 @@ export function apply(ctx, config) {
  * has only id/name/description/reasoning).
  */
 async function models(ctx, request, response) {
+  if (rejected(ctx, request, response)) return
   if (request.method !== 'GET') {
     response.writeHead(405, { 'content-type': 'application/json' })
     response.end(JSON.stringify({ error: 'method not allowed' }))
@@ -98,6 +120,7 @@ async function models(ctx, request, response) {
  * "why did my text-only model not get ask_image" without a debug build.
  */
 function status(ctx, request, response) {
+  if (rejected(ctx, request, response)) return
   if (request.method !== 'GET') {
     response.writeHead(405, { 'content-type': 'application/json' })
     response.end(JSON.stringify({ error: 'method not allowed' }))

@@ -6,9 +6,8 @@
 纯文本对话模型调用一个 <code>ask_image</code> 工具；同一个 DSH 里已经注册、声明支持图片输入的读图模型来回答，文字作为工具结果返回。</p>
 
 <p>
-<a href="https://www.npmjs.com/package/@szleaves/dsh-image-to-text"><img src="https://img.shields.io/npm/v/@szleaves/dsh-image-to-text?style=flat-square&labelColor=1F2328&color=2DA44E&logo=npm&logoColor=white" alt="npm 版本"></a>
-<a href="https://www.npmjs.com/package/@szleaves/dsh-image-to-text"><img src="https://img.shields.io/npm/dm/@szleaves/dsh-image-to-text?style=flat-square&labelColor=1F2328&logo=npm&logoColor=white" alt="npm 下载量"></a>
-<a href="./LICENSE"><img src="https://img.shields.io/npm/l/@szleaves/dsh-image-to-text?style=flat-square&labelColor=1F2328&color=blue" alt="MIT 许可"></a>
+<a href="https://github.com/SzLeaves/dsh-image-to-text"><img src="https://img.shields.io/badge/GitHub-SzLeaves%2Fdsh--image--to--text-1F2328?style=flat-square&logo=github&logoColor=white" alt="GitHub 仓库"></a>
+<a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue?style=flat-square&labelColor=1F2328" alt="MIT 许可"></a>
 <img src="https://img.shields.io/badge/dsh-%3E%3D0.2.1--rc.5%20%3C0.3.0-38BDF8?style=flat-square&labelColor=1F2328" alt="dsh >=0.2.1-rc.5 <0.3.0">
 </p>
 
@@ -32,17 +31,27 @@ DeepSeek Harness 允许在同一个会话里混用模型。只接受文字的模
 | 项 | 要求 |
 |---|---|
 | dsh | `>= 0.2.1-rc.5 < 0.3.0`（只在 `0.2.1-rc.5` 上验证过） |
-| 宿主服务 | `llm`、`tools`、`systemPrompt`；配置页还需要 `settings` 与 `webServer` |
+| 宿主服务 | `llm`、`tools`、`systemPrompt`；配置页还需要 `settings`、`webServer`，以及宿主用于请求鉴权的 `connection` 服务 |
 | 读图模型 | 模型目录里声明了 `image` 输入（`inputModalities` 包含 `image`）的模型 |
 
 缺少 `settings` 和 `webServer` 时工具仍可用，只是没有配置页。
 
+只在 `0.2.1-rc.5` 上验证过；更新的 `0.2.x` 版本未测试。宿主侧依赖
+`llm.resolveModelInfo`/`prepareCall`、`tools.register`/`guard`、`systemPrompt.section`，
+配置页另需 `settings.configure` 与 `webServer.register`。
+
 ## 安装
 
-在 DSH 里打开 **插件 → 添加插件**，指向本 bundle。两种 `install_bundle` 目标都可以：
+本插件从 GitHub 仓库分发，没有发布 npm 包。先把仓库克隆到任意目录，再在 DSH 里打开
+**插件 → 添加插件**，指向该目录或由它打出的 tarball：
 
-- **目录**：`target` 指向本仓库的绝对路径。pnpm 会记为 `link:`，profile 的 `node_modules` 下是指向工作树的软链，适合开发期。注意下面的软链说明。
-- **tarball**：在仓库里 `npm pack --pack-destination ./dist`，再把 `target` 指向生成的 `szleaves-dsh-image-to-text-<版本>.tgz`。pnpm 会安装实体副本，之后移动或删除源码目录都不影响运行。长期使用推荐这种方式。
+```bash
+git clone https://github.com/SzLeaves/dsh-image-to-text.git
+cd dsh-image-to-text
+```
+
+- **目录**：`target` 指向克隆目录的绝对路径。pnpm 会记为 `link:`，profile 的 `node_modules` 下是指向工作树的软链，适合开发期。注意下面的软链说明。
+- **tarball**：在克隆目录里 `npm pack --pack-destination ./dist`，再把 `target` 指向生成的 `szleaves-dsh-image-to-text-<版本>.tgz`。pnpm 会安装实体副本，之后移动或删除源码目录都不影响运行。长期使用推荐这种方式。
 
 `link:` 安装时，Node 解析 `@deepseek-ai/schemastery`（本插件唯一依赖）会从包所在目录逐级往上找 `node_modules`，而 `~/.dsh/self-plugins/…` 这条路径上面没有它。要在包内建一个软链指向 profile 里已有的副本，否则插件加载失败：
 
@@ -69,7 +78,7 @@ tarball 安装没有这个问题：实体副本落在 profile 的 `node_modules`
 | `promptTemplate` | 内置模板 | 调用方给了 `purpose` 时发给读图模型的用户消息。`{{purpose}}` 和 `{{maxChars}}` 各替换一次；留空回退内置模板。 |
 | `defaultPrompt` | 内置通用提示词 | 调用方没给 `purpose` 时使用；留空回退内置提示词。 |
 | `maxChars` | `8000` | 单次读图回答的字符上限。超出时截断并带 `…[truncated]` 标记；小于 1 或非法值按 `8000`，超过 `100000` 按 `100000`。上限小到放不下标记时直接硬切。 |
-| `timeoutSeconds` | `180` | 单次读图调用的截止时间。小于 1 或非法值按 `180`，上限 `3600`。 |
+| `timeoutSeconds` | `180` | 单次读图调用的截止时间，每次调用时读取。小于 1 或非法值按 `180`，上限 `3600`。 |
 | `bridgeAdmission` | `true` | 向提示准入声明图片支持，使纯文本模型能把图片作为占位内容收进会话。关闭后图片消息可能被直接拒绝，一般只用于排查问题。只在加载时读取，改了要重新加载插件。 |
 | `pathImport` | `true` | 允许 `ask_image` 用 `path` 参数直接读磁盘上的图片文件（例如模型刚渲染的幻灯片截图）。关掉后只接受会话里已有的图片。 |
 | `cacheEntries` | `200` | 进程内保留多少条读图结果；`0` 表示不缓存，上限 `5000`。 |
@@ -150,11 +159,12 @@ tarball 安装没有这个问题：实体副本落在 profile 的 `node_modules`
 
 - 每次读图都比直接看图多一次往返。
 - 主模型可能根本不调用 `ask_image`，尤其是没有明确问题、或它认为自己已经知道答案时；插件只能靠工具描述和提示段引导。
-- 工具的 `timeoutMs` 在注册时按 `timeoutSeconds * 1000 + 15000` 固定。多出的 15 秒让读图调用自己的超时先触发、返回更具体的错误。改了 `timeoutSeconds` 要重新加载插件。
+- 工具的内核截止时间是固定的 `3615` 秒（读图超时上限加 15 秒）。读图调用自己的截止时间来自 `timeoutSeconds`，每次调用时读取，改了从下一次读图开始生效。
 - 模态声明缺失的模型按"能看图"处理，拿不到 `ask_image`；如果它其实是纯文本模型，这是声明缺失带来的限制。
 - 一次只读一张图；`image` 选择器基于会话可见消息，错误提示最多列出最近 20 张的标签。
 - `path` 读图依赖宿主的 `fs` 与 `attachments` 服务；两者都缺失时工具返回一句可读错误，其它功能不受影响（插件不在 `inject` 里声明它们，仍能挂在精简 profile 上）。
 - 设置页的下拉只列声明图片输入的模型；模态未知的模型不会出现在列表里，但可以直接写进配置，`fixed` 模式仍会使用。
+- 纯文本模型下，`read_image` 按工具名隐藏；若别的插件也注册了同名工具，会被一起隐藏。
 
 ## 开发
 
@@ -163,7 +173,7 @@ npm test          # 等价于 node --test test/
 npm run check     # node --check，只做语法自检
 ```
 
-测试只用 `node:test` 和 `node:assert/strict`，不联网，也不读写 `~/.dsh`。测试文件按模块拆分：
+测试只用 `node:test` 和 `node:assert/strict`，不联网，也不读写 `~/.dsh`。`locale/*.json` 只放插件的 `meta`（标题与描述，宿主读取）；设置页文案是 `client.js` 里的内联词典。测试文件按模块拆分：
 
 ```
 test/images.test.js

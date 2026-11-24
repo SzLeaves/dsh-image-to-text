@@ -2,11 +2,15 @@
 import test, { beforeEach } from 'node:test'
 import assert from 'node:assert/strict'
 
-import { __routeCacheClear, installVisibility, SECTION_NAME } from '../lib/visibility.js'
+import { __routeCacheClear, installVisibility, recentDecisions, SECTION_NAME } from '../lib/visibility.js'
 
 beforeEach(() => {
   __routeCacheClear()
 })
+
+// Every install stays live until the last test disposes them all; module-level
+// state is only dropped when the final instance goes away.
+const liveDisposers = []
 
 function setup({ resolve, text = 'SECTION BODY' } = {}) {
   const services = {}
@@ -60,6 +64,7 @@ function setup({ resolve, text = 'SECTION BODY' } = {}) {
   }
 
   const dispose = installVisibility(ctx, { text })
+  liveDisposers.push(dispose)
   return { ctx, services, state, dispose }
 }
 
@@ -323,4 +328,13 @@ test('dispose removes the section, both listeners, and the guard', () => {
     state.disposers.sort(),
     ['guard', 'on:llm/adapters-updated', 'on:system-prompt/assemble', 'section'].sort(),
   )
+})
+
+test('the last dispose drops cached decisions', async () => {
+  const installed = setup()
+  await assemble(installed, makeAssembly(), { agent: headerAgent('text-model') })
+  assert.ok(recentDecisions().length > 0)
+
+  for (const dispose of liveDisposers.splice(0)) dispose()
+  assert.deepEqual(recentDecisions(), [])
 })

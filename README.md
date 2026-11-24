@@ -8,9 +8,8 @@ is already registered in the same DSH — one that declares image input — answ
 text comes back as the tool result.</p>
 
 <p>
-<a href="https://www.npmjs.com/package/@szleaves/dsh-image-to-text"><img src="https://img.shields.io/npm/v/@szleaves/dsh-image-to-text?style=flat-square&labelColor=1F2328&color=2DA44E&logo=npm&logoColor=white" alt="npm version"></a>
-<a href="https://www.npmjs.com/package/@szleaves/dsh-image-to-text"><img src="https://img.shields.io/npm/dm/@szleaves/dsh-image-to-text?style=flat-square&labelColor=1F2328&logo=npm&logoColor=white" alt="npm downloads"></a>
-<a href="./LICENSE"><img src="https://img.shields.io/npm/l/@szleaves/dsh-image-to-text?style=flat-square&labelColor=1F2328&color=blue" alt="MIT license"></a>
+<a href="https://github.com/SzLeaves/dsh-image-to-text"><img src="https://img.shields.io/badge/GitHub-SzLeaves%2Fdsh--image--to--text-1F2328?style=flat-square&logo=github&logoColor=white" alt="GitHub repository"></a>
+<a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue?style=flat-square&labelColor=1F2328" alt="MIT license"></a>
 <img src="https://img.shields.io/badge/dsh-%3E%3D0.2.1--rc.5%20%3C0.3.0-38BDF8?style=flat-square&labelColor=1F2328" alt="dsh >=0.2.1-rc.5 <0.3.0">
 </p>
 
@@ -46,20 +45,31 @@ that declares image input, and returns its answer as text.
 | Requirement | Value |
 |---|---|
 | dsh | `>= 0.2.1-rc.5 < 0.3.0` (verified on `0.2.1-rc.5` only) |
-| Host services | `llm`, `tools`, `systemPrompt`; the configuration page also needs `settings` and `webServer` |
+| Host services | `llm`, `tools`, `systemPrompt`; the configuration page also needs `settings`, `webServer` and the host's `connection` service for request authentication |
 | Reader model | a model in the catalog that declares `image` input (`inputModalities` includes `image`) |
 
 Without `settings` and `webServer` the tool still works; there is just no configuration
 page.
 
+Verified against `0.2.1-rc.5`. Newer `0.2.x` releases have not been tested; the host half
+relies on `llm.resolveModelInfo`/`prepareCall`, `tools.register`/`guard` and
+`systemPrompt.section`, plus `settings.configure` and `webServer.register` for the page.
+
 ## Install
 
-Open **Plugins → Add plugin** in DSH and point it at this bundle. Two targets both work:
+The plugin is distributed from this GitHub repository; there is no npm package. Clone it
+into a directory of your choice, then point **Plugins → Add plugin** in DSH at that
+directory or at a tarball built from it:
 
-- **Directory**: `target` is an absolute path to this repository. pnpm records it as a
+```bash
+git clone https://github.com/SzLeaves/dsh-image-to-text.git
+cd dsh-image-to-text
+```
+
+- **Directory**: point `target` at the clone's absolute path. pnpm records it as a
   `link:`, so the copy under the profile's `node_modules` is a symlink to your working
   tree — handy while developing. See the symlink note below.
-- **Tarball**: `npm pack --pack-destination ./dist` in the repo, then point `target` at
+- **Tarball**: `npm pack --pack-destination ./dist` in the clone, then point `target` at
   the generated `szleaves-dsh-image-to-text-<version>.tgz`. pnpm installs a real copy; moving or
   deleting the source tree later does not affect it. This is the recommended way for
   long-term use.
@@ -96,7 +106,7 @@ and lists only models that declare image input.
 | `promptTemplate` | built-in | User message sent to the reader when the caller gives a `purpose`. `{{purpose}}` and `{{maxChars}}` each replaced once; empty falls back to the built-in template. |
 | `defaultPrompt` | built-in | Used when the caller gives no `purpose`; empty falls back to the built-in prompt. |
 | `maxChars` | `8000` | Character cap for one reading. Over the cap it is cut with a `…[truncated]` marker; values below 1 or invalid use `8000`, above `100000` use `100000`. When the cap is too small to hold the marker the text is cut hard. |
-| `timeoutSeconds` | `180` | Deadline for one reading. Values below 1 or invalid use `180`, cap `3600`. |
+| `timeoutSeconds` | `180` | Deadline for one reading, read on every call. Values below 1 or invalid use `180`, cap `3600`. |
 | `bridgeAdmission` | `true` | Declares image support to prompt admission so a text-only model can take an image into the session as a placeholder. Turning it off usually means image messages get rejected; for troubleshooting only. Read once at load time — reload the plugin to change it. |
 | `pathImport` | `true` | Lets `ask_image` read a file on disk via the `path` argument (e.g. a slide the model just rendered). Off means only images already in the session. |
 | `cacheEntries` | `200` | How many readings are kept in process memory; `0` disables caching, cap `5000`. |
@@ -219,9 +229,9 @@ so the model does not need to understand internal error codes.
 - The main model may not call `ask_image` at all, especially without a clear question or
   when it thinks it already knows the answer; the plugin can only guide via the tool
   description and the prompt section.
-- The tool's `timeoutMs` is fixed at registration as `timeoutSeconds * 1000 + 15000`.
-  The extra 15 seconds let the reading's own timeout fire first and produce a specific
-  error. Changing `timeoutSeconds` requires reloading the plugin.
+- The tool's kernel deadline is a fixed `3615` seconds (the reader timeout cap plus
+  15 seconds). The reading's own deadline comes from `timeoutSeconds`, which is read on
+  every call, so changing it takes effect on the next reading.
 - A model with a missing modality declaration is treated as able to see images, so it
   never gets `ask_image`; if it is really text-only, that is a limitation of the
   declaration.
@@ -233,6 +243,8 @@ so the model does not need to understand internal error codes.
 - The settings page's dropdown lists only models that declare image input; a model with
   unknown modality is not listed but can still be written into the config and used in
   `fixed` mode.
+- `read_image` is hidden by tool name while the step's model is text-only. A tool with
+  that name registered by another plugin would be hidden as well.
 
 ## Development
 
@@ -242,6 +254,8 @@ npm run check     # node --check, syntax only
 ```
 
 Tests use only `node:test` and `node:assert/strict`; no network, no `~/.dsh` access.
+`locale/*.json` holds only the plugin `meta` (title and description, read by the host);
+the settings page copy is the inline dictionary in `client.js`.
 Files, one per module:
 
 ```

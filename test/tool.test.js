@@ -283,16 +283,16 @@ test('an unknown error without a message gets a generic sentence', async () => {
   )
 })
 
-test('timeoutMs follows timeoutSeconds and is fixed when the tool is registered', () => {
+test('the kernel deadline is a constant above the reader timeout cap', () => {
   const config = { timeoutSeconds: 30 }
   const { tool } = buildTool({ config })
-  assert.equal(tool.timeoutMs, 30 * 1000 + 15000)
+  assert.equal(tool.timeoutMs, (3600 + 15) * 1000)
 
   config.timeoutSeconds = 1
-  assert.equal(tool.timeoutMs, 30 * 1000 + 15000, 'changing settings does not rewrite an existing registration')
+  assert.equal(tool.timeoutMs, (3600 + 15) * 1000, 'the reader timeout is read per call, not baked into the registration')
 
   const { tool: fallback } = buildTool({ config: { timeoutSeconds: 0 } })
-  assert.equal(fallback.timeoutMs, 16 * 1000)
+  assert.equal(fallback.timeoutMs, (3600 + 15) * 1000)
 })
 
 test('a path reads that file and never asks the conversation for images', async () => {

@@ -1,6 +1,6 @@
 {
   "name": "@szleaves/dsh-image-to-text",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "private": true,
   "description": "Let a text-only conversation model read images by asking an image-capable model that is already registered in the same DSH.",
   "keywords": [
@@ -24,9 +24,12 @@
   "bugs": {
     "url": "https://github.com/SzLeaves/dsh-image-to-text/issues"
   },
+  "publishConfig": {
+    "access": "public"
+  },
   "type": "module",
   "engines": {
-    "node": ">=20",
+    "node": ">=22",
     "dsh": ">=0.2.1-rc.5 <0.3.0-0"
   },
   "exports": {
@@ -50,18 +53,12 @@
     "LICENSE"
   ],
   "dsh": {
+    "manifestVersion": 1,
     "bundle": {
       "patch": "./cordis.patch.yml"
     },
     "client": {
-      "platform": "web",
-      "immediately": true
-    },
-    "compatibility": {
-      "dshReleases": {
-        "0.2.1-rc.5": "verified"
-      },
-      "note": "Verified on 0.2.1-rc.5 only. Host half uses llm.resolveModelInfo / prepareCall, tools.register / guard, systemPrompt.section, and optionally settings.configure plus webServer.register; the client half is a plugins.row.config page. Newer 0.2.x releases are untested."
+      "platform": "web"
     }
   },
   "scripts": {
